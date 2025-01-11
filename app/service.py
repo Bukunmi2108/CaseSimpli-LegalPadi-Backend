@@ -1,9 +1,9 @@
 from sqlmodel.ext.asyncio.session import AsyncSession
 from fastapi import Body, HTTPException, status, BackgroundTasks
-from .schemas import (RevokedTokenModel, UserCreateModel, UserUpdateModel, AdminCreateModel, AdminUpdateModel, CourseCreateModel, CourseUpdateModel, TagModel)
+from .schemas import (RevokedTokenModel, UserCreateModel, UserUpdateModel, AdminCreateModel, AdminUpdateModel, CourseCreateModel, CourseUpdateModel, TagModel, AdminCreateUserModel)
 from .models import (RevokedToken, User, UserRole, Course, Tag, CourseTag)
 from sqlmodel import select, desc
-from .utils import generate_passwd_hash, create_safe_url
+from .utils import generate_passwd_hash, create_safe_url, generate_password
 from .errors import (UserAlreadyExists, AdminAlreadyExists, EditorAlreadyExists, CourseAlreadyExists, CourseNotFound, UserNotFound, EditorNotFound, AdminNotFound, TagNotFound, TagAlreadyExists)
 from .config import settings
 from .mail import create_message, mail
@@ -42,6 +42,14 @@ class UserService:
         if result is None:
             raise UserNotFound()
         return result.first()
+
+    async def get_user_role(self, uid: str, session: AsyncSession):
+        user = select(User).where(User.uid == uid)
+        result = await session.exec(user)
+
+        if result is None:
+            raise UserNotFound()
+        return result.first().role
 
     async def get_user_by_email(self, email: str, session: AsyncSession):
         user = select(User).where((User.email == email) & (User.role == UserRole.USER.value))
@@ -97,7 +105,7 @@ class UserService:
             subject='Activation Link',
             body=html
         )
-        background_tasks.add_task(mail.send_message, message)
+        # background_tasks.add_task(mail.send_message, message)
         ############################
 
         session.add(new_user)
@@ -171,8 +179,10 @@ class EditorService:
             raise EditorNotFound()
         return result.all()
     
-    async def create_an_editor(self, user_data: UserCreateModel, background_tasks: BackgroundTasks, session: AsyncSession):
+    async def create_an_editor(self, user_data: AdminCreateUserModel, background_tasks: BackgroundTasks, session: AsyncSession):
         user_data_dict = user_data.model_dump()
+        user_data_dict["password"] = generate_password()
+        print(user_data_dict["password"])
 
         email = user_data_dict["email"]
 
@@ -199,7 +209,7 @@ class EditorService:
             subject='Activation Link',
             body=html
         )
-        background_tasks.add_task(mail.send_message, message)
+        # background_tasks.add_task(mail.send_message, message)
         ############################
 
         session.add(new_user)
@@ -352,6 +362,15 @@ class CourseService:
 
     async def get_all_courses(self, session: AsyncSession):
         statement = select(Course).order_by(Course.created_at)
+
+        result = await session.exec(statement)
+
+        if result is None:
+            raise CourseNotFound()
+        return result.all()
+
+    async def get_all_user_courses(self, user_uid:str, session: AsyncSession):
+        statement = select(Course).where(Course.user_uid == user_uid).order_by(Course.created_at)
 
         result = await session.exec(statement)
 

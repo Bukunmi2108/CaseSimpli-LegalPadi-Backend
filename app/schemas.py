@@ -36,6 +36,16 @@ class UserResponseModel(BaseModel):
     is_premium: bool
     role: str
 
+class AdminEditorResponseProfileModel(BaseModel):
+    email: str
+    first_name: str
+    last_name: str
+    phone_number: Optional[str] = None
+    is_verified: bool
+    is_premium: bool
+    role: str
+    courses: List['Course']
+
 class UserResponseModelProfile(BaseModel):
     email: str
     first_name: str
@@ -63,6 +73,12 @@ class Admin(BaseModel):
 class AdminCreateModel(BaseModel):
     email: str
     password: str
+    first_name: str
+    last_name: str
+
+class AdminCreateUserModel(BaseModel):
+    email: str
+    password: Optional[str] = None 
     first_name: str
     last_name: str
 
@@ -99,7 +115,8 @@ class Course(BaseModel):
     created_at: datetime 
     updated_at: datetime 
     user_uid: uuid.UUID 
-    tags: List[str]
+    tags: List['TagResponseModel']
+    
 
 class CourseCreateModel(BaseModel):
     title: str
@@ -124,6 +141,7 @@ class CourseResponseModel(BaseModel):
     created_at: datetime 
     updated_at: datetime 
     user: Optional['UserResponseModelProfile']
+    tags: List['TagResponseModel']
 
 
 # TAGS
@@ -132,6 +150,10 @@ class Tag(BaseModel):
 
 class TagModel(Tag):
     pass
+
+class TagResponseModel(BaseModel):
+    id: int
+    name: str
 
 # TOKEN
 

@@ -25,7 +25,9 @@ async def get_all_courses(session: AsyncSession = Depends(get_session)):
 
     return course_q
 
-@router.get('/get/{course_uid}', dependencies=[role_checker, revoked_token_check], response_model=CourseResponseModel)
+
+
+@router.get('/get/{course_uid}', dependencies=[role_checker, revoked_token_check], response_model=List[CourseResponseModel])
 async def get_course_by_uid(course_uid: str, session: AsyncSession = Depends(get_session)):
     course_q = await course.get_course_by_uid(course_uid, session)
 

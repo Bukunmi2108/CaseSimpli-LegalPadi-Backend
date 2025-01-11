@@ -5,6 +5,9 @@ from .config import settings
 import uuid
 import logging
 from itsdangerous import URLSafeTimedSerializer
+import random
+import string
+
 
 passwd_context = CryptContext(
     schemes=['bcrypt']
@@ -59,3 +62,9 @@ def create_safe_url(user_uid: str, email: str) -> str:
 def decode_safe_url(url:str) -> dict:
     serializer = URLSafeTimedSerializer(settings.SECRET_KEY, salt='email-verification')
     return serializer.loads(url, max_age=3600)
+
+
+def generate_password(length=12):
+  characters = string.ascii_letters + string.digits + string.punctuation
+  password = ''.join(random.choice(characters) for _ in range(length))
+  return password

@@ -23,13 +23,13 @@ revoked_token_check = Depends(check_revoked_token)
 
 
 @router.get("/courses/{tag_id}/all", dependencies=[revoked_token_check], response_model=List[CourseResponseModel])
-async def get_all_courses_with_tag(tag_id: int, session: AsyncSession = Depends(get_session)):
+async def get_all_tag_courses(tag_id: int, session: AsyncSession = Depends(get_session)):
     courses = await course_tag.get_all_tag_courses(tag_id, session)
 
     return courses
 
 @router.get("/tags/{course_uid}/all", dependencies=[revoked_token_check])
-async def get_all_courses_with_tag(course_uid: uuid.UUID, session: AsyncSession = Depends(get_session)):
+async def get_all_course_tags(course_uid: uuid.UUID, session: AsyncSession = Depends(get_session)):
     tags = await course_tag.get_all_course_tags(course_uid, session)
 
     return tags

@@ -21,6 +21,7 @@ class User(SQLModel, table=True):
     last_name: str = Field(nullable=False)
     email: str = Field(nullable=False)
     password: str = Field(nullable=False) 
+    # temporary_password: str = Field(nullable=True)
     phone_number: str = Field(nullable=True)
     role: UserRole = Field(sa_column=Column(String, default=UserRole.USER.value))
     is_verified: bool = Field(default=False)

@@ -18,19 +18,22 @@ class TokenBearer(HTTPBearer):
         super().__init__(auto_error=auto_error)
 
     async def __call__(self, request: Request) -> HTTPAuthorizationCredentials | None:
-        creds = await super().__call__(request)
+        try:
+            creds = await super().__call__(request)
 
-        token = creds.credentials
+            token = creds.credentials
 
-        token_data = decode_token(token)
+            token_data = decode_token(token)
 
-        if not self.token_valid(token):
+            if not self.token_valid(token):
+                raise InvalidToken()
+
+
+            self.verify_token_data(token_data)
+            
+            return token_data
+        except Exception as e:
             raise InvalidToken()
-
-
-        self.verify_token_data(token_data)
-        
-        return token_data
     
     def token_valid(self, token:str) -> bool:
 

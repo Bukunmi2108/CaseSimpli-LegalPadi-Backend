@@ -1,7 +1,7 @@
 from fastapi import Depends, APIRouter, BackgroundTasks, status
 from ..db.main import get_session
 from sqlmodel.ext.asyncio.session import AsyncSession
-from ..schemas import (UserCreateModel, UserUpdateModel, UserResponseModel)
+from ..schemas import (UserCreateModel, UserUpdateModel, UserResponseModel, AdminCreateUserModel)
 from ..service import (EditorService, UserService, TokenService)
 from ..dependencies import (RoleChecker,check_revoked_token)
 from typing import List
@@ -35,7 +35,7 @@ async def get_editor_by_uid(editor_uid: str, session: AsyncSession = Depends(get
     return editor_q
 
 @router.post('/create', dependencies=[role_checker_admin, revoked_token_check])
-async def create_editor(editor_data: UserCreateModel,background_tasks: BackgroundTasks, session: AsyncSession = Depends(get_session)):
+async def create_editor(editor_data: AdminCreateUserModel,background_tasks: BackgroundTasks, session: AsyncSession = Depends(get_session)):
     
     editor_q = await editor.create_an_editor(editor_data, background_tasks, session)
 

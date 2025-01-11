@@ -2,7 +2,7 @@ from fastapi import status, Body, Depends, APIRouter, BackgroundTasks, HTTPExcep
 from fastapi.responses import JSONResponse
 from ..db.main import get_session
 from sqlmodel.ext.asyncio.session import AsyncSession
-from ..schemas import (UserCreateModel, UserUpdateModel, UserResponseModel, UserLoginModel)
+from ..schemas import (UserCreateModel, UserUpdateModel, UserResponseModel, UserLoginModel, AdminEditorResponseProfileModel)
 from ..service import (UserService, TokenService)
 from ..utils import (create_access_token, verify_passwd_hash, decode_safe_url)
 from datetime import timedelta, datetime
@@ -18,7 +18,8 @@ router = APIRouter(
 user = UserService()
 revoked_token = TokenService()
 
-role_checker = Depends(RoleChecker(['user']))
+role_checker = Depends(RoleChecker(['user', 'editor', 'admin']))
+role_checker_admin = Depends(RoleChecker(['editor', 'admin']))
 revoked_token_check = Depends(check_revoked_token)
 
 
@@ -69,6 +70,19 @@ async def login_user(login_data: UserLoginModel = Body(...), session: AsyncSessi
 @router.get('/profile', dependencies=[role_checker, revoked_token_check], response_model=UserResponseModel)
 async def get_user_profile(user = Depends(get_current_user)):
     return user
+
+@router.get('/admin/profile', dependencies=[role_checker_admin, revoked_token_check], response_model=AdminEditorResponseProfileModel)
+async def get_user_profile(user = Depends(get_current_user)):
+    return user
+
+@router.get('/editor/profile', dependencies=[role_checker_admin, revoked_token_check], response_model=AdminEditorResponseProfileModel)
+async def get_user_profile(user = Depends(get_current_user)):
+    return user
+
+@router.get('/role', dependencies=[role_checker, revoked_token_check])
+async def get_user_role(current_user = Depends(get_current_user), session: AsyncSession = Depends(get_session)):
+    role = await user.get_user_role(current_user.uid, session)
+    return role
 
 @router.put('/update_user', dependencies=[role_checker, revoked_token_check], response_model=UserResponseModel)
 async def update_user_profile(user_data: UserUpdateModel = Body(...), current_user = Depends(get_current_user), session: AsyncSession = Depends(get_session)):
