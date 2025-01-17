@@ -56,7 +56,16 @@ class UserLoginModel(BaseModel):
     email: str
     password: str 
 
-  
+
+# EDITOR
+class EditorResponseModel(BaseModel):
+    uid: uuid.UUID 
+    email: str
+    first_name: str
+    last_name: str
+    role: str
+    temporary_password: str
+
 # ADMIN
 class Admin(BaseModel):
     uid: uuid.UUID 
@@ -119,6 +128,7 @@ class Course(BaseModel):
     
 
 class CourseCreateModel(BaseModel):
+    type: Optional[str]
     title: str
     thumbnail: Optional[str] = None
     description: Optional[str] = None
@@ -140,6 +150,7 @@ class CourseResponseModel(BaseModel):
     courses: dict
     created_at: datetime 
     updated_at: datetime 
+    likes_count: int
     user: Optional['UserResponseModelProfile']
     tags: List['TagResponseModel']
 
@@ -165,3 +176,17 @@ class RevokedTokenModel(BaseModel):
 
 class EmailModel(BaseModel):
     addresses: List[str]
+
+
+# DICTIONARY
+
+class TermDefinition(BaseModel):
+    term: str
+    definition: str
+
+
+# LIKES
+
+class Like(BaseModel):
+    user_uid: uuid.UUID
+    course_uid: uuid.UUID

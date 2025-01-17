@@ -5,12 +5,18 @@ import uuid
 from typing import Optional, List
 from enum import Enum
 
+import sqlmodel
+
 
 
 class UserRole(Enum):
     USER = "user"
     ADMIN = "admin"
     EDITOR = "editor"
+
+class CourseType(Enum):
+    VIDEO = "video"
+    ARTICLE = "article"
 
 # USERS
 class User(SQLModel, table=True):
@@ -21,7 +27,7 @@ class User(SQLModel, table=True):
     last_name: str = Field(nullable=False)
     email: str = Field(nullable=False)
     password: str = Field(nullable=False) 
-    # temporary_password: str = Field(nullable=True)
+    temporary_password: str = Field(nullable=True)
     phone_number: str = Field(nullable=True)
     role: UserRole = Field(sa_column=Column(String, default=UserRole.USER.value))
     is_verified: bool = Field(default=False)
@@ -29,7 +35,8 @@ class User(SQLModel, table=True):
     created_at: datetime = Field(sa_column= Column(pg.TIMESTAMP, default=datetime.now, nullable=False))
     updated_at: datetime = Field(sa_column= Column(pg.TIMESTAMP, default=datetime.now))
     
-    courses: List['Course'] = Relationship(back_populates="user", sa_relationship_kwargs={"lazy":"selectin"})
+    courses: List['Course'] = Relationship(back_populates="user", sa_relationship_kwargs={"lazy":"selectin"}, cascade_delete=True)
+    likes: List['Like'] = Relationship(back_populates="user", sa_relationship_kwargs={"lazy":"selectin"})
 
     def __repr__(self):
         return f"<User {self.first_name} | Role {self.role}>"
@@ -56,13 +63,15 @@ class Course(SQLModel, table=True):
     title: str = Field(nullable=False) 
     thumbnail: str = Field(nullable=True) 
     description: str = Field(nullable=True)
-    
+    likes_count: int = Field(nullable=True)
+    type: CourseType = Field(sa_column=Column(String, default=CourseType.VIDEO.value))
     courses: Optional[dict] = Field(sa_column=Column("courses", pg.JSONB(astext_type=Text())))
     created_at: datetime = Field(sa_column= Column(pg.TIMESTAMP, default=datetime.now, nullable=False))
     updated_at: datetime = Field(sa_column= Column(pg.TIMESTAMP, default=datetime.now, onupdate=datetime.now)) 
     user_uid: uuid.UUID = Field(foreign_key="users.uid")
 
     user: Optional['User'] = Relationship(back_populates="courses", sa_relationship_kwargs={"lazy":"selectin"})
+    likes: List['Like'] = Relationship(back_populates="courses", sa_relationship_kwargs={"lazy":"selectin"})
     tags: List['Tag'] = Relationship(back_populates="courses", sa_relationship_kwargs={"lazy":"selectin", "secondary": "course_tags"})
 
     def __repr__(self):
@@ -77,6 +86,18 @@ class CourseTag(SQLModel, table=True):
     def __repr__(self):
         return f"<Course Uid {self.course_uid} has tag {self.tag_id}>"
 
+
+class Like (SQLModel, table=True):
+    __tablename__ = 'likes'
+
+    user_uid: uuid.UUID = Field(primary_key=True, foreign_key='users.uid')
+    course_uid: uuid.UUID = Field(primary_key=True, foreign_key='courses.uid')
+
+    user: Optional['User'] = Relationship(back_populates="likes", sa_relationship_kwargs={"lazy":"selectin"})
+    courses: Optional['Course'] = Relationship(back_populates="likes", sa_relationship_kwargs={"lazy":"selectin"})
+
+    def __repr__(self):
+        return f"<User Uid {self.user_uid} has liked {self.course_uid}>"
 
 # TOKEN
 class RevokedToken(SQLModel, table=True):

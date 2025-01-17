@@ -1,7 +1,8 @@
 from sqlmodel.ext.asyncio.session import AsyncSession
+from sqlalchemy.orm import joinedload
 from fastapi import Body, HTTPException, status, BackgroundTasks
 from .schemas import (RevokedTokenModel, UserCreateModel, UserUpdateModel, AdminCreateModel, AdminUpdateModel, CourseCreateModel, CourseUpdateModel, TagModel, AdminCreateUserModel)
-from .models import (RevokedToken, User, UserRole, Course, Tag, CourseTag)
+from .models import (RevokedToken, User, UserRole, Course, Tag, CourseTag, Like)
 from sqlmodel import select, desc
 from .utils import generate_passwd_hash, create_safe_url, generate_password
 from .errors import (UserAlreadyExists, AdminAlreadyExists, EditorAlreadyExists, CourseAlreadyExists, CourseNotFound, UserNotFound, EditorNotFound, AdminNotFound, TagNotFound, TagAlreadyExists)
@@ -182,39 +183,39 @@ class EditorService:
     async def create_an_editor(self, user_data: AdminCreateUserModel, background_tasks: BackgroundTasks, session: AsyncSession):
         user_data_dict = user_data.model_dump()
         user_data_dict["password"] = generate_password()
-        print(user_data_dict["password"])
 
         email = user_data_dict["email"]
 
         if await self.get_editor_by_email(email, session):
             raise EditorAlreadyExists()
         
-        new_user = User(
+        new_editor = User(
             **user_data_dict
         )
-        new_user.password = generate_passwd_hash(new_user.password)
-        new_user.role = UserRole.EDITOR.value
+        new_editor.temporary_password = new_editor.password
+        new_editor.password = generate_passwd_hash(new_editor.password)
+        new_editor.role = UserRole.EDITOR.value
 
         #######################
-        safe_url = create_safe_url( str(new_user.uid), new_user.email)
+        safe_url = create_safe_url( str(new_editor.uid), new_editor.email)
 
-        html = f"""<>
+        html = f"""<div>
                     <h1>Welcome to the App</h1></br>
                     <p>Congratulations, you have successfully signed up</p></br>
                     <p>Click <a href="{settings.DOMAIN_URL}/api/v1/user/verify_safe_url/{safe_url}">here</a> to verify your account</p>
-                    </>
+                    </div>
                 """
         message = create_message(
-            recipients=[new_user.email],
+            recipients=[new_editor.email],
             subject='Activation Link',
             body=html
         )
         # background_tasks.add_task(mail.send_message, message)
         ############################
 
-        session.add(new_user)
+        session.add(new_editor)
         await session.commit()
-        return new_user
+        return new_editor
 
     async def update_a_editor(self, user_uid: str, user_data: UserUpdateModel, session: AsyncSession):
         user_to_update = await self.get_editor_by_uid(user_uid, session)
@@ -352,31 +353,71 @@ class AdminService:
         
 class CourseService:
     async def get_course_by_uid(self, course_uid: str, session: AsyncSession):
-        statement = select(Course).where(Course.uid == course_uid)
-
+        statement = select(Course).where(Course.uid == course_uid).options(joinedload(Course.likes)).options(joinedload(Course.tags))
         result = await session.exec(statement)
-
-        if result is None:
+        course = result.first()
+        if course is None:
             raise CourseNotFound()
-        return result.first()
+        
+        course_data = {
+            "title": course.title,
+            "description": course.description,
+            "thumbnail": course.thumbnail,
+            "likes_count": len(course.likes),
+            "courses": course.courses,
+            "uid": course.uid,
+            "tags": course.tags,
+            "user": course.user,
+            "created_at": course.created_at,
+            "updated_at": course.updated_at
+        }
+
+        return course_data 
 
     async def get_all_courses(self, session: AsyncSession):
-        statement = select(Course).order_by(Course.created_at)
-
+        statement = select(Course).order_by(Course.created_at).options(joinedload(Course.likes)).options(joinedload(Course.tags))
         result = await session.exec(statement)
+        courses = result.unique()
+        courses_data = []
+        for course in courses:
+            course_data = {
+                "title": course.title,
+                "description": course.description,
+                "thumbnail": course.thumbnail,
+                "likes_count": len(course.likes),
+                "courses": course.courses,
+                "uid": course.uid,
+                "tags": course.tags,
+                "user": course.user,
+                "created_at": course.created_at,
+                "updated_at": course.updated_at
+            }
+            courses_data.append(course_data)
 
-        if result is None:
-            raise CourseNotFound()
-        return result.all()
+        return courses_data 
 
-    async def get_all_user_courses(self, user_uid:str, session: AsyncSession):
-        statement = select(Course).where(Course.user_uid == user_uid).order_by(Course.created_at)
-
+    async def get_all_user_courses(self, user_uid: str, session: AsyncSession):
+        statement = select(Course).where(Course.user_uid == user_uid).order_by(Course.created_at).options(joinedload(Course.likes)).options(joinedload(Course.tags))
         result = await session.exec(statement)
+        courses = result.unique()
 
-        if result is None:
-            raise CourseNotFound()
-        return result.all()
+        courses_data = []
+        for course in courses:
+            course_data = {
+                "title": course.title,
+                "description": course.description,
+                "thumbnail": course.thumbnail,
+                "likes_count": len(course.likes),
+                "courses": course.courses,
+                "uid": course.uid,
+                "tags": course.tags,
+                "user": course.user,
+                "created_at": course.created_at,
+                "updated_at": course.updated_at
+            }
+            courses_data.append(course_data)
+
+        return courses_data 
 
     async def create_course(self, user_uid: str, course_data: CourseCreateModel, session: AsyncSession):
         course_data_dict = course_data.model_dump()
@@ -442,12 +483,21 @@ class TagService:
 
     async def get_all_tags(self, session: AsyncSession):
         statement = select(Tag)
-
         result = await session.exec(statement)
-
         if result is None:
             raise TagNotFound()
         return result.all()
+    
+    async def get_all_tag_name(self, query: str, session: AsyncSession):
+        statement = select(Tag)
+        result = await session.exec(statement)
+        all_tags = result.all()
+        tags = []
+
+        for tag in all_tags:
+            if (query.lower()) in ((tag.name).lower()):
+                tags.append(tag)
+        return tags
     
     async def create_tag(self, tag_name: TagModel, session: AsyncSession):
         tag_check = await self.get_tag_by_name(tag_name, session)
@@ -504,18 +554,17 @@ class CourseTagService:
 
     async def get_all_tag_courses(self, tag_id: int, session: AsyncSession):
         """This gets all the courses that has a particular tag"""
-        statement = select(CourseTag).where(CourseTag.tag_id == tag_id)
-
-        result = await session.exec(statement)
+        all_courses = await CourseService().get_all_courses(session)
 
         courses = []
 
-        for x in result:
-            x_dict = x.model_dump()
+        for course in all_courses:
+            if course['tags']:
+                for tag in course['tags']:
+                    if tag.id == tag_id:
+                        courses.append(course)
 
-            course = await CourseService().get_course_by_uid(x_dict["course_uid"], session)
-            courses.append(course)
-        
+
         if courses is None:
             raise CourseNotFound()
         return courses
@@ -557,3 +606,36 @@ class CourseTagService:
 
         return "Course Tags Added"
     
+class LikeService:
+    async def get_like(self, user_uid: str, course_uid: str, session: AsyncSession):
+        like_check = select(Like).where((Like.user_uid == user_uid) & (Like.course_uid == course_uid))
+        result = await session.exec(like_check)
+        like = result.first()
+        return like if like else None
+
+    async def check_existing_like(self, user_uid: str, course_uid: str, session: AsyncSession):
+        like_check = select(Like).where((Like.user_uid == user_uid) & (Like.course_uid == course_uid))
+        result = await session.exec(like_check)
+        return True if result.first() else False
+
+    async def like_a_post(self, user_uid, course_uid, session: AsyncSession):
+        like_check = await self.check_existing_like(user_uid, course_uid, session)
+        if like_check is False:
+            new_like = Like(
+                user_uid=user_uid,
+                course_uid=course_uid
+            )
+
+            session.add(new_like)
+            await session.commit()
+            return 'liked'
+        return 'Already Liked'
+
+    async def unlike_a_post(self, user_uid, course_uid, session: AsyncSession):
+        like_check = await self.get_like(user_uid, course_uid, session)
+        if like_check:
+            await session.delete(like_check)
+            await session.commit()
+            return 'unliked'
+     
+        return 'not liked'

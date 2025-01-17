@@ -19,9 +19,15 @@ revoked_token_check = Depends(check_revoked_token)
 
 
 
-@router.get('/get/all', dependencies=[role_checker, revoked_token_check])
+@router.get('/get/all', dependencies=[revoked_token_check])
 async def get_all_tags(session: AsyncSession = Depends(get_session)):
     tag_q = await tag.get_all_tags(session)
+
+    return tag_q
+
+@router.get('/name/{query}', dependencies=[ revoked_token_check])
+async def get_all_tags(query:str = None, session: AsyncSession = Depends(get_session)):
+    tag_q = await tag.get_all_tag_name(query=query, session=session)
 
     return tag_q
 

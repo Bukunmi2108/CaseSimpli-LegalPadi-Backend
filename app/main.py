@@ -1,7 +1,7 @@
 from fastapi import FastAPI, APIRouter
 from contextlib import asynccontextmanager
 from .db.main import init_db
-from .routers import (admin, user, course, editor, course_tag, tag)
+from .routers import (admin, user, course, editor, course_tag, tag, dictionary, like)
 from .errors import register_all_errors
 from .middleware import register_middleware
 
@@ -33,6 +33,8 @@ api_router.include_router(course.router)
 api_router.include_router(editor.router)
 api_router.include_router(tag.router)
 api_router.include_router(course_tag.router)
+api_router.include_router(dictionary.router)
+api_router.include_router(like.router)
 
 
 app.include_router(api_router, prefix=f"/api/{version}")

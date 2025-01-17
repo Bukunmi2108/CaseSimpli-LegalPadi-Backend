@@ -1,7 +1,7 @@
 from fastapi import Depends, APIRouter, BackgroundTasks, status
 from ..db.main import get_session
 from sqlmodel.ext.asyncio.session import AsyncSession
-from ..schemas import (UserCreateModel, UserUpdateModel, UserResponseModel, AdminCreateUserModel)
+from ..schemas import (UserCreateModel, UserUpdateModel, UserResponseModel, AdminCreateUserModel, EditorResponseModel)
 from ..service import (EditorService, UserService, TokenService)
 from ..dependencies import (RoleChecker,check_revoked_token)
 from typing import List
@@ -22,7 +22,7 @@ revoked_token_check = Depends(check_revoked_token)
 
 
 
-@router.get('/get/all', dependencies=[role_checker, revoked_token_check], response_model=List[UserResponseModel])
+@router.get('/get/all', dependencies=[role_checker, revoked_token_check], response_model=List[EditorResponseModel])
 async def get_all_editors(session: AsyncSession = Depends(get_session)):
     editor_q = await editor.get_all_editors(session)
 
@@ -34,7 +34,7 @@ async def get_editor_by_uid(editor_uid: str, session: AsyncSession = Depends(get
 
     return editor_q
 
-@router.post('/create', dependencies=[role_checker_admin, revoked_token_check])
+@router.post('/create', dependencies=[role_checker_admin, revoked_token_check], response_model=EditorResponseModel)
 async def create_editor(editor_data: AdminCreateUserModel,background_tasks: BackgroundTasks, session: AsyncSession = Depends(get_session)):
     
     editor_q = await editor.create_an_editor(editor_data, background_tasks, session)

@@ -9,6 +9,7 @@ from datetime import timedelta
 from ..dependencies import AccessTokenBearer, RoleChecker, check_revoked_token, get_current_user
 from ..errors import InvalidCredentials
 from ..models import UserRole
+from typing import List
 
 
 router = APIRouter(
@@ -77,6 +78,12 @@ async def login_admin(login_data: AdminLoginModel = Body(...), session: AsyncSes
 @router.get('/profile', dependencies=[role_checker, revoked_token_check], response_model=AdminProfileModel)
 async def get_user_profile(user = Depends(get_current_user)):
     return user
+
+@router.get('/get/all', dependencies=[role_checker, revoked_token_check], response_model = List[AdminProfileModel])
+async def get_all_editors(session: AsyncSession = Depends(get_session)):
+    admin_q = await admin.get_all_admins(session)
+
+    return admin_q
 
 
 @router.get("/logout")
