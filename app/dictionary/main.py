@@ -19,7 +19,7 @@ def load_dictionary(filename):
     print(f"Error: Could not find the dictionary file '{filename}'.")
     return {} 
 
-dict = load_dictionary('./data.json')
+dict = load_dictionary('app/dictionary/data.json')
 
 law_dict = {}
 
