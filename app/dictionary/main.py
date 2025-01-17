@@ -3,7 +3,6 @@ from fastapi import HTTPException
 from ..schemas import TermDefinition
 from random import choice
 import os
-import ''
 
 
 # Load terms and definitions from JSON file
@@ -13,8 +12,12 @@ def load_dictionary(filename):
 
   # Construct the absolute path to the data file
   file_path = os.path.join(current_dir, filename)
-  with open(file_path) as f:
-    return json.load(f)
+  try:
+    with open(file_path) as f:
+      return json.load(f)
+  except FileNotFoundError:
+    print(f"Error: Could not find the dictionary file '{filename}'.")
+    return {} 
 
 dict = load_dictionary('./data.json')
 
