@@ -2,11 +2,17 @@ import json
 from fastapi import HTTPException
 from ..schemas import TermDefinition
 from random import choice
+import os
+
 
 # Load terms and definitions from JSON file
 def load_dictionary(filename):
   """Loads the Black's Law Dictionary from a JSON file."""
-  with open(filename, 'r') as f:
+  current_dir = os.path.dirname(os.path.abspath(__file__))
+
+  # Construct the absolute path to the data file
+  file_path = os.path.join(current_dir, filename)
+  with open(file_path) as f:
     return json.load(f)
 
 dict = load_dictionary('data.json')
