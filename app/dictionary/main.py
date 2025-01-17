@@ -3,6 +3,7 @@ from fastapi import HTTPException
 from ..schemas import TermDefinition
 from random import choice
 import os
+import ''
 
 
 # Load terms and definitions from JSON file
@@ -15,7 +16,7 @@ def load_dictionary(filename):
   with open(file_path) as f:
     return json.load(f)
 
-dict = load_dictionary('/data.json')
+dict = load_dictionary('./data.json')
 
 law_dict = {}
 

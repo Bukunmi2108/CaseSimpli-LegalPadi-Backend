@@ -7,6 +7,8 @@ from sqlalchemy.orm import sessionmaker
 engine = AsyncEngine(
     create_engine(
         url="postgresql+asyncpg://bukunmi:ooBQtbfNizWyZY7apccilsTELHKKFEKl@dpg-cu3jcv1u0jms73dku8gg-a/legal_padi"
+    # create_engine(
+    #     url=settings.DATABASE_URL
     )
 )
 
