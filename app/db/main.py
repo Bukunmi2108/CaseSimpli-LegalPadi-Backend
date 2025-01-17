@@ -6,9 +6,10 @@ from sqlalchemy.orm import sessionmaker
 
 engine = AsyncEngine(
     create_engine(
-        url=settings.DATABASE_URL
+        url="postgresql+asyncpg://bukunmi:ooBQtbfNizWyZY7apccilsTELHKKFEKl@dpg-cu3jcv1u0jms73dku8gg-a/legal_padi"
     )
 )
+
 
 async def init_db():
     async with engine.begin() as conn:
