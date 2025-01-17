@@ -16,7 +16,7 @@ mail_config = ConnectionConfig(
     MAIL_FROM_NAME = settings.MAIL_FROM_NAME,
     USE_CREDENTIALS = settings.USE_CREDENTIALS,
     VALIDATE_CERTS = settings.VALIDATE_CERTS,
-    TEMPLATE_FOLDER = Path(BASE_DIR, 'templates')
+    # TEMPLATE_FOLDER = Path(BASE_DIR, 'templates')
 )
 
 mail = FastMail(
