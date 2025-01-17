@@ -15,7 +15,7 @@ def load_dictionary(filename):
   with open(file_path) as f:
     return json.load(f)
 
-dict = load_dictionary('data.json')
+dict = load_dictionary('/data.json')
 
 law_dict = {}
 
