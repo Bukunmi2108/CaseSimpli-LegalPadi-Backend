@@ -8,10 +8,8 @@ import os
 # Load terms and definitions from JSON file
 def load_dictionary(filename):
   """Loads the Black's Law Dictionary from a JSON file."""
-  current_dir = os.path.dirname(os.path.abspath(__file__))
+  file_path = os.path.join(os.path.dirname(__file__), filename)
 
-  # Construct the absolute path to the data file
-  file_path = os.path.join(current_dir, filename)
   try:
     with open(file_path) as f:
       return json.load(f)
@@ -19,7 +17,7 @@ def load_dictionary(filename):
     print(f"Error: Could not find the dictionary file '{filename}'.")
     return {} 
 
-dict = load_dictionary('app/dictionary/data.json')
+dict = load_dictionary('data.json')
 
 law_dict = {}
 
