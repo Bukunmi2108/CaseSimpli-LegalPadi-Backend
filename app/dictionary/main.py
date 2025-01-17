@@ -9,7 +9,7 @@ def load_dictionary(filename):
   with open(filename, 'r') as f:
     return json.load(f)
 
-dict = load_dictionary('app\dictionary\data.json')
+dict = load_dictionary('data.json')
 
 law_dict = {}
 
