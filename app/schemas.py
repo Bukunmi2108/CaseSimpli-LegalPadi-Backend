@@ -145,7 +145,7 @@ class CourseUpdateModel(BaseModel):
 class CourseResponseModel(BaseModel):
     uid: uuid.UUID
     title: str 
-    type: str
+    type: Optional[str]
     thumbnail: Optional[str] 
     description: Optional[str]
     courses: dict
